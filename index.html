@@ -5,14 +5,31 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Squat AI 자세 분석</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- TensorFlow.js (metadata.json의 tfjsVersion에 맞춘 CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.7.4/dist/tf.min.js"></script>
-  <!-- Compatibility shim: ensure tf.fromPixels exists before teachablemachine-pose loads -->
+
+  <!-- INLINE SHIM: teachablemachine-pose가 내부적으로 호출하는 fromPixels/Pt.fromPixels 보장 -->
   <script>
-    if (window.tf && !tf.fromPixels && tf.browser && typeof tf.browser.fromPixels === 'function') {
-      tf.fromPixels = tf.browser.fromPixels;
-      console.log('inline-shim: tf.fromPixels patched from tf.browser.fromPixels (before tmPose)');
+    try {
+      // tf.fromPixels가 없다면 tf.browser.fromPixels로 채움
+      if (window.tf && !tf.fromPixels && tf.browser && typeof tf.browser.fromPixels === 'function') {
+        tf.fromPixels = tf.browser.fromPixels;
+        console.log('inline-shim: tf.fromPixels patched from tf.browser.fromPixels (before tmPose)');
+      }
+      // teachablemachine 번들이 Pt.fromPixels 같은 축약 식별자를 쓰는 경우를 대비한 전역 폴백
+      window.Pt = window.Pt || {};
+      if (window.tf && tf.fromPixels && !window.Pt.fromPixels) {
+        window.Pt.fromPixels = tf.fromPixels;
+        console.log('inline-shim: window.Pt.fromPixels set to tf.fromPixels (before tmPose)');
+      }
+      // 추가 안전장치 (다른 내부 이름 대비)
+      window.pFromPixels = window.pFromPixels || (window.tf && tf.fromPixels);
+    } catch (e) {
+      console.warn('inline-shim: 예외 발생', e);
     }
   </script>
+
+  <!-- Teachable Machine Pose 라이브러리 -->
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.6/dist/teachablemachine-pose.min.js"></script>
 </head>
 <body>
@@ -45,6 +62,7 @@
       </div>
 
       <div class="cam-area">
+        <!-- autoplay 정책 때문에 muted 추가 -->
         <video id="video" autoplay playsinline muted></video>
         <canvas id="captureCanvas" style="display:none"></canvas>
         <div class="preview-area">
