@@ -1,3 +1,10 @@
+// Compatibility shim: teachablemachine-pose expects tf.fromPixels.
+// If tf.fromPixels is missing but tf.browser.fromPixels exists, patch it.
+if (window.tf && !tf.fromPixels && tf.browser && typeof tf.browser.fromPixels === 'function') {
+  tf.fromPixels = tf.browser.fromPixels;
+  console.log('shim: tf.fromPixels patched from tf.browser.fromPixels');
+}
+
 const MODEL_BASE = "./";
 let model = null;
 let isAnalyzingFile = false;
@@ -102,6 +109,12 @@ async function analyzePoseFromImage(imageElement, resultContainer, analysisKey) 
       src: loadedImage.src,
       analysisKey
     });
+
+    // Ensure tf.fromPixels exists at runtime
+    if (window.tf && !tf.fromPixels && tf.browser && typeof tf.browser.fromPixels === 'function') {
+      tf.fromPixels = tf.browser.fromPixels;
+      console.log('shim: tf.fromPixels patched from tf.browser.fromPixels (runtime)');
+    }
 
     const { pose, posenetOutput } = await model.estimatePose(loadedImage, false);
     console.log("포즈 추정 결과:", pose);
