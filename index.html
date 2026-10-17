@@ -6,6 +6,13 @@
   <title>Squat AI 자세 분석</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.7.4/dist/tf.min.js"></script>
+  <!-- Compatibility shim: ensure tf.fromPixels exists before teachablemachine-pose loads -->
+  <script>
+    if (window.tf && !tf.fromPixels && tf.browser && typeof tf.browser.fromPixels === 'function') {
+      tf.fromPixels = tf.browser.fromPixels;
+      console.log('inline-shim: tf.fromPixels patched from tf.browser.fromPixels (before tmPose)');
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.6/dist/teachablemachine-pose.min.js"></script>
 </head>
 <body>
@@ -38,7 +45,7 @@
       </div>
 
       <div class="cam-area">
-        <video id="video" autoplay playsinline></video>
+        <video id="video" autoplay playsinline muted></video>
         <canvas id="captureCanvas" style="display:none"></canvas>
         <div class="preview-area">
           <img id="capturePreview" alt="캡처된 사진 미리보기" />
